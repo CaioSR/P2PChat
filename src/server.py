@@ -9,6 +9,8 @@ class Server:
     connections = []
     peers = []
     clients = []
+    ip = socket.gethostbyname(socket.gethostname())
+
     def __init__(self, port):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,10 +22,9 @@ class Server:
 
         tracker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tracker.connect(('127.0.0.1', 5000))
+        self.updatePeers(tracker, (self.ip, port))
 
         print('Connected to tracker ...')
-
-        self.retrievePeers(tracker)
 
         pThread = threading.Thread(target=self.listenTracker, args=(tracker,))
         pThread.daemon = True
@@ -50,35 +51,22 @@ class Server:
             cThread = threading.Thread(target=self.receiver, args=(conn, addr))
             cThread.daemon = True
             cThread.start()
-
+            
             self.connections.append(conn)
-            self.updatePeers(tracker, conn.getsockname())
-            print('[Server]>> ' + str(addr[0]) + ':' + str(addr[1]) + ' connected')
 
-    def retrievePeers(self, tracker):
-        tracker.send(b'get')
+            print('[Server]>> ' + addr[0] + ':' + str(addr[1]) + ' connected')
 
-        data = tracker.recv(1024)
-        jsonData = data.decode()
-        self.peers = json.loads(jsonData)
+            if len(self.connection) == 1:
+                self.sendPeers()
 
-        print('[Server]>> Received Peers from Tracker:', self.peers)
+    # def retrievePeers(self, tracker):
+    #     tracker.send(b'get')
 
-    def sendPeers(self):
-        peers = json.dumps(self.peers)
-        msg = ('\x11' + peers).encode()
+    #     data = tracker.recv(1024)
+    #     jsonData = data.decode()
+    #     self.peers = json.loads(jsonData)
 
-        for connections in self.connections:
-            connections.send(msg)
-
-    def updatePeers(self, tracker, addr):
-        peer = {
-            'ip' : addr[0],
-            'port' : str(addr[1])
-        }
-        peer = json.dumps(peer)
-        msg = ('set' + peer).encode()
-        tracker.send(msg)
+    #     print('[Server]>> Received Peers from Tracker:', self.peers)
 
     def listenTracker(self, tracker):
 
@@ -91,6 +79,22 @@ class Server:
             print('[Server]>> Received Peers from Tracker:', self.peers)
 
             self.sendPeers()
+
+    def sendPeers(self):
+        peers = json.dumps(self.peers)
+        msg = ('\x11' + peers).encode()
+
+        if len(self.connections) > 0:
+            self.connections[0].send(msg)
+
+    def updatePeers(self, tracker, addr):
+        peer = {
+            'ip' : addr[0],
+            'port' : str(addr[1])
+        }
+        peer = json.dumps(peer)
+        msg = ('set' + peer).encode()
+        tracker.send(msg)
 
     def removeClient(self, addr):
         for client in self.clients:

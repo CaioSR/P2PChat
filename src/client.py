@@ -26,7 +26,6 @@ class Client:
             print(response.decode())
 
         
-
         iThread = threading.Thread(target=self.listenMsg, args=(sock,))
         iThread.daemon = True
         iThread.start()

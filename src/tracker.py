@@ -35,10 +35,10 @@ class Tracker:
                 data = conn.recv(1024)
                 print('[Tracker]>> Received Data', data.decode())
 
-                if data.decode() == 'get':
-                    self.sendPeers(conn)
+                # if data.decode() == 'get':
+                #     self.sendPeers(conn)
 
-                elif data[:3].decode() == 'set':
+                if data[:3].decode() == 'set':
                     peer = json.loads(data[3:].decode())
                     self.addPeer(peer)
 
