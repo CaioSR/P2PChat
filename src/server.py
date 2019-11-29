@@ -36,6 +36,8 @@ class Server:
 
             conn, addr = sock.accept()
 
+            print('aloooo', conn[1])
+
             data = conn.recv(1024)
             user = data.decode()
 
@@ -56,7 +58,7 @@ class Server:
 
             print('[Server]>> ' + addr[0] + ':' + str(addr[1]) + ' connected')
 
-            if len(self.connection) == 1:
+            if len(self.connections) == 1:
                 self.sendPeers()
 
     # def retrievePeers(self, tracker):
