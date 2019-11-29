@@ -35,9 +35,11 @@ class Tracker:
                 data = conn.recv(1024)
                 print('[Tracker]>> Received Data', data.decode())
 
-                if data.decode()[:5] == '-req ':
+                if data.decode()[:5] == '-con ':
                     user = data.decode()[5:]
                     response = self.contactUser(user)
+
+                    print(response)
 
                     if response:
                         contactInfo = json.dumps(response[1])
@@ -61,12 +63,13 @@ class Tracker:
             exit()
 
     def contactUser(self, user):
-        peer = [p for p in self.peers if p['user'] == user]
+        peer = [p for p in self.peers if p['user'] == user][0]
         conn = [c for c in self.connections if peer in c][0][0]
 
         conn.send(('-inv ' + user).encode())
 
         response = conn.recv(1024).decode()
+
         if response[:2] == '-a':
             return True, peer
         elif response[:2] == '-b':
@@ -81,7 +84,10 @@ class Tracker:
         data = []
 
         for user in self.peers:
-            data.append(user['username'])
+            data.append(user['user'])
+
+        data = json.dumps(data)
+        print('[Tracker]>> Sending peers')
 
         conn.send(('-set ' + data).encode())
 
@@ -95,7 +101,7 @@ class Tracker:
             print('[Tracker]>> Current Peers:', self.peers)
 
             for conn in self.connections:
-                self.sendPeers(conn)
+                self.sendPeers(conn[0])
 
     def removeConnection(self, conn):
         element = [el for el in self.connections if conn in el]
