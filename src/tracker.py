@@ -13,7 +13,7 @@ class Tracker:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', 5000))
+        sock.bind(('', 32500))
         sock.listen()
 
         print('Tracker running ...')
@@ -37,17 +37,21 @@ class Tracker:
 
                 if data.decode()[:5] == '-con ':
                     user = data.decode()[5:]
-                    response = self.contactUser(user)
+                    peer = [p for p in self.peers if p['user'] == user][0]
+                    contactInfo = json.dumps(peer)
+                    conn.send(('-acc ' + contactInfo).encode())
 
-                    print(response)
+                    # response = self.contactUser(user)
 
-                    if response:
-                        contactInfo = json.dumps(response[1])
-                        msg = ('-acc ' + contactInfo).encode()
-                        conn.send(contactInfo.encode())
-                    else:
-                        msg = '-denied'
-                        conn.send(msg.encode())
+                    # print(response)
+
+                    # if response:
+                    #     contactInfo = json.dumps(response[1])
+                    #     msg = ('-acc ' + contactInfo).encode()
+                    #     conn.send(contactInfo.encode())
+                    # else:
+                    #     msg = '-denied'
+                    #     conn.send(msg.encode())
 
                 if data[:5].decode() == '-set ':
                     peer = json.loads(data[5:].decode())
@@ -62,20 +66,20 @@ class Tracker:
         except:
             exit()
 
-    def contactUser(self, user):
-        peer = [p for p in self.peers if p['user'] == user][0]
-        conn = [c for c in self.connections if peer in c][0][0]
+    # def contactUser(self, user):
+    #     peer = [p for p in self.peers if p['user'] == user][0]
+    #     conn = [c for c in self.connections if peer in c][0][0]
 
-        conn.send(('-inv ' + user).encode())
+    #     conn.send(('-inv ' + user).encode())
 
-        response = conn.recv(1024).decode()
+    #     response = conn.recv(1024).decode()
 
-        if response[:2] == '-a':
-            return True, peer
-        elif response[:2] == '-b':
-            return False
-        else:
-            return False
+    #     if response[:2] == '-a':
+    #         return True, peer
+    #     elif response[:2] == '-b':
+    #         return False
+    #     else:
+    #         return False
             
         
 
@@ -104,9 +108,14 @@ class Tracker:
                 self.sendPeers(conn[0])
 
     def removeConnection(self, conn):
-        element = [el for el in self.connections if conn in el]
+        element = [c for c in self.connections if conn in c]
+        print(element)
+        print(self.peers)
         self.peers.remove(element[1])
-        self.connections.remove(element)
+        print(self.peers)
+        print(self.connections)
+        self.connections.remove(element[0])
+        print(self.connections)
             
 
        

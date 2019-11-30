@@ -10,5 +10,5 @@ ip = socket.gethostbyname(socket.gethostname())
 # sThread.start()
 # client = Client((ip, 5001))
 
-p = Peer(5001)
+p = Peer(31001)
 
