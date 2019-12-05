@@ -43,10 +43,11 @@ class Tracker:
         try:
             
             while True:
+                
                 data = conn.recv(1024)
                 plain_data = rsa.decrypt(self.private_key, data)
-
                 data = plain_data.decode()
+
                 print('[Tracker]>> Received Data', data)
 
                 # se a mensagem possuir prefixo -con é uma solicitação de um usuário para se conectar a outro
