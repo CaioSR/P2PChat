@@ -177,8 +177,6 @@ class Peer:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.connect((contactInfo['ip'], int(contactInfo['port'])))
 
-
-
                 # se já possuir uma conexão a encerra
                 if self.connection:
                     print('Your connection with ' + self.connection['user'] + ' will be terminated.')
