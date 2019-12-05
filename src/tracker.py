@@ -4,6 +4,7 @@ import sys
 import time
 from random import randint
 import json
+import rsa
 
 class Tracker:
     connections = []
@@ -19,8 +20,12 @@ class Tracker:
 
         print('Tracker running ...')
 
+        self.private_key, self.public_key = rsa.generateKey()
+
         while True:
             conn, addr = sock.accept()
+
+            conn.send(rsa.serialize(self.public_key))
 
             # cria a thread para escutar mensagens da conexão
             tThread = threading.Thread(target=self.handler, args=(conn, addr))
@@ -36,26 +41,40 @@ class Tracker:
         Esse método escuta mensagens dos clientes
         """
         try:
+            
             while True:
                 data = conn.recv(1024)
-                print('[Tracker]>> Received Data', data.decode())
+                plain_data = rsa.decrypt(self.private_key, data)
+
+                data = plain_data.decode()
+                print('[Tracker]>> Received Data', data)
 
                 # se a mensagem possuir prefixo -con é uma solicitação de um usuário para se conectar a outro
-                if data.decode()[:5] == '-con ':
-                    user = data.decode()[5:]
+                if data[:5] == '-con ':
+                    key = [c for c in self.connections if c[0] == conn][0][1]
+
+                    user = data[5:]
 
                     # busca esse usuário na lista de peers para recuperar os dados para conexão
                     peer = [p for p in self.peers if p['user'] == user][0]
+                    peerPubKey = peer['pKey']
+                    del peer['pKey']
 
                     contactInfo = json.dumps(peer)
 
+                    
                     # adiciona o prefixo -acc junto dos dados e envia ao solicitante
-                    conn.send(('-acc ' + contactInfo).encode())
-
+                    msg = ('-acc ' + contactInfo).encode()
+                    cripted_msg = rsa.encrypt(key, msg)
+                    conn.send(cripted_msg)
+                    time.sleep(1)
+                    conn.send(peerPubKey)
+                    
                 # se a mensagem possuir prefixo -set é um novo peer se conetando e deve atualizar a lista de peers
-                elif data[:5].decode() == '-set ':
-                    peer = json.loads(data[5:].decode())
-                    self.addPeer(peer)
+                elif data[:5] == '-set ':
+                    peer = json.loads(data[5:])
+                    pKey = conn.recv(1024)
+                    self.addPeer(peer, conn, pKey)
 
                 # se não foi nada é uma desconexão (não funciona)
                 elif not data:
@@ -67,16 +86,19 @@ class Tracker:
         except:
             exit()
 
-    def addPeer(self, peer):
+    def addPeer(self, peer, conn, pKey):
         """
         Esse método adiciona um peer a lista de peers
         """
 
+        peer['pKey'] = pKey
+
         if peer not in self.peers:
             self.peers.append(peer)
+            cIndex = self.connections.index(conn)
+            self.connections[cIndex] = (conn, rsa.deserialize(pKey))
 
             print('[Tracker]>> Current Peers:', self.peers)
-
 
             # com a lista atualizada, as listas dos clientes também devem ser atualizadas
             self.sendPeers()
@@ -93,12 +115,13 @@ class Tracker:
             data.append(user['user'])
 
         data = json.dumps(data)
+        msg = ('-set ' + data).encode()
+
         print('[Tracker]>> Sending peers')
 
         for conn in self.connections:
-            conn.send(('-set ' + data).encode())
-
-
+            cripted_msg = rsa.encrypt(conn[1], msg)
+            conn[0].send(cripted_msg)
 
        
 if __name__ == '__main__':
