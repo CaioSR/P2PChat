@@ -1,12 +1,13 @@
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
+backend = default_backend()
 
 def generateKey():
     private = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
-        backend=default_backend()
+        backend=backend
     )
     public = private.public_key()
 
@@ -41,5 +42,7 @@ def serialize(public_key):
 def deserialize(public_bytes):
     return serialization.load_der_public_key(
         data = public_bytes,
-        backend = default_backend()
+        backend=backend
     )
+
+

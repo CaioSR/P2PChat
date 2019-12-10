@@ -153,7 +153,7 @@ class Peer:
         while True:
 
             cripted_data = tracker.recv(1024)
-            data = aes.decrypt(self.simKey, cripted_data).decode()  ######
+            data = aes.decrypt(self.simKey, cripted_data).decode() 
 
             # caso possua prefixo -set, stá recebendo uma lista atualizada de peers
             if data[:5]== '-set ':
@@ -177,7 +177,8 @@ class Peer:
                     self.connection['conn'].close()
                     self.connection = {}
 
-                print('[Client]>> ' + contactInfo['user'] + ' accepted your invite. Connecting...')
+                print('[Client]>> ' + contactInfo['user'] + ' accepted your invite.')
+                print('Connecting...')
 
                 # cria a nova conexão com o outro peer
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

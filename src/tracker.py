@@ -106,7 +106,7 @@ class Tracker:
         msg = ('-set ' + data).encode()
 
         for conn in self.connections:
-            cripted_msg = aes.encrypt(conn[1], msg) ########
+            cripted_msg = aes.encrypt(conn[1], msg)
             conn[0].send(cripted_msg)
 
         print('[Tracker]>> Sent peers')
